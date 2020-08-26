@@ -3,7 +3,7 @@ from utils.game_services import GamesService
 from utils.team_services import TeamsService
 
 gs = GamesService()
-t=gs.get_all_sessions()
+all_sessions=gs.get_all_sessions()
 
 ts= TeamsService()
 
@@ -19,42 +19,38 @@ players=[]
 elo=[]
 n_games=[]
 
-for i in t:
-    for n in i:  
-        if n=='player_id':
-            players.append(i[n])      
-        if n=='distance':
-            dist.append(i[n])
-        if n=='pace':
-            pace.append(i[n])
-        if n=='goals_scored':
-            goals.append(i[n])
-        if n=='assists':
-            assists.append(i[n])
-        if n=='top_speed':
-            top_speed.append(i[n])      
+for session in all_sessions:
+    players.append(session['player_id'])      
+       
+    dist.append(session['distance'])
+
+    pace.append(session['pace'])
+
+    goals.append(session['goals_scored'])
+
+    assists.append(session['assists'])
+
+    top_speed.append(session['top_speed'])      
 
                
-score_a=i['score_a'] 
-score_b=i['score_b']
+score_a=session['score_a'] 
+score_b=session['score_b']
 
 
-for i in players:
-    aux=ts.get_elo(str(team_id),str(i))   
+for player in players:
+    aux=ts.get_elo(str(team_id),str(player))   
     elo.append(aux[0]['elo'])
     n_games.append(aux[0]['games_played'])
 
 
 print("1st ELO ---> " +str(elo))
 
-#elo=[1500, 1500, 1500, 1500, 1500, 1500, 1500, 2000, 1500, 1500, 1500, 1500, 1500, 1500] #elos dos jogadores
-#n_games=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] #numero de jogos
 elo_team_a = 0
 elo_team_b = 0
 #################################
 total_goals= score_a + score_b
 ##############################
-g=[]
+g=[] #facção goals/total_goals
 d=[]
 ast=[]
 pac=[]
@@ -80,6 +76,7 @@ for count, i in enumerate (elo):
     else:
         elo_team_b = elo_team_b + i
 
+#media do elo da equipa
 elo_team_a = elo_team_a/jogo
 elo_team_b = elo_team_b/jogo
 
@@ -95,26 +92,25 @@ for count, i in enumerate (goals) :
     if(count<jogo):
         result=score_a-score_b
         s.append(10-(20/(1+(pow(10,0.1*result)))))
-        e_a.append(1/(1+pow(10,(elo_team_a-elo_team_b)/400)))
+        e_a.append(2-(4/(1+pow(1.2,(elo_team_b-elo_team_a)*0.1))))
         
     else:
         result=score_b-score_a
         s.append(10-(20/(1+(pow(10,0.1*result)))))        
-        e_a.append(1/(1+pow(10,(elo_team_b-elo_team_a)/400)))
+        e_a.append(2-(4/(1+pow(1.2,(elo_team_b-elo_team_a)*0.1))))
 
-    a=elo[count]+(k[count]*s[count]+e_a[count]+performance[count]*3)
+    a=elo[count]+(k[count]*s[count]*e_a[count]+performance[count]*3)
 
     new_elo.append(round(a))  
 
 print("NEW ELO Calculado --->  " )
 print(new_elo)
 
+#update new elo na db para cada player
 for count, p in enumerate (players): 
     a=new_elo[count] 
-    print("TEam: " +str(team_id) +"   player:   " +str(p) +"  elo: " +str(a) )      
+    print("Team: " +str(team_id) +"   player:   " +str(p) +"  elo: " +str(a) )      
     ts.update_elo(str(team_id),str(p),new_elo[count])
-
-
 
 
 #print("NEW ELO (Guardado) --->  " +new_elo)
