@@ -1,8 +1,9 @@
 import requests, json
+from utils.connections import connections
 
 class TeamsService:
     def __init__(self):
-        self.url="http://1901c2e7129e.ngrok.io"
+        self.url=connections['team_service_url']
 
     def get_all_elos(self):
         response = requests.request("GET", self.url+"/v1/elo/")
@@ -23,11 +24,12 @@ class TeamsService:
         payload=json.dumps(data, indent=4)
 
         response = requests.request("POST", self.url+"/v1/elo", headers=headers, data = payload)        
-        print(response.text.encode('utf8'))
+        #print(response.text.encode('utf8'))
 
-    def update_elo(self, team_id, user_id, elo): 
+    def update_elo(self, team_id, user_id, elo, nr_games): 
         data ={
-            "elo": elo
+            "elo": elo,
+            "games_played": nr_games
         }
         payload=json.dumps(data)
         headers = {
@@ -35,7 +37,8 @@ class TeamsService:
         }
 
         response = requests.request("PATCH", self.url+"/v1/elo/?user_id="+user_id+"&team_id="+team_id , headers=headers, data = payload)
-        print(response.text.encode('utf8'))
+        print(response.text.encode('utf8'), "elo updated!")
+    
 
 
 
